@@ -7,7 +7,7 @@
 import { definePluginSettings } from "@api/Settings";
 import { OptionType } from "@utils/types";
 
-import { NDIConfig } from "./SettingsAbout";
+import { NDIConfig } from "./settingsPanel";
 
 export const optionDefs = {
     masterSwitch: {

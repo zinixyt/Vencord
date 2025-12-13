@@ -37,7 +37,7 @@ export default definePlugin({
     name: "NDIcord",
     description: "A vencord plugin that adds NDI streaming support to Discord. (For content creators)",
     authors: [Devs.zinixyt],
-    // Render a basic chat input button for testing. Clicking it will print a message to the console.
+    // Render a basic chat input button for testing.
     startAt: StartAt.Init,
     chatBarButton: {
         icon: NDIIcon,
@@ -45,6 +45,4 @@ export default definePlugin({
     },
 
     settings,
-
-    // settings are defined in `./settings.ts` and rendered via the `config` component
 });
