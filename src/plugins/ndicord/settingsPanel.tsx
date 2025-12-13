@@ -19,14 +19,14 @@ import { optionDefs, settings } from "./settings";
 
 const categories = [
     {
-        id: "general",
-        label: "General",
-        keys: ["showTestButton", "initNdiEngineOnStartup"]
+        id: "ui",
+        label: "UI",
+        keys: ["uiFlavour"]
     },
     {
         id: "engine",
         label: "NDI Engine",
-        keys: ["masterSwitch", "ndiRuntimePath", "videoFormat"]
+        keys: ["masterSwitch", "initNdiEngineOnStartup", "ndiRuntimePath", "videoFormat"]
     },
     {
         id: "capture",
@@ -41,7 +41,7 @@ const categories = [
     {
         id: "advanced",
         label: "Advanced",
-        keys: []
+        keys: ["showTestButton"]
     }
 ];
 
