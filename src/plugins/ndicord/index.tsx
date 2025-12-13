@@ -44,6 +44,7 @@ export default definePlugin({
     name: "NDIcord",
     description: "Adds NDI streaming support to Discord. (Intended for content creators and streamers)",
     authors: [Devs.zinixyt],
+    // Render a basic chat input button for testing.
 
     startAt: StartAt.Init,
     chatBarButton: {
