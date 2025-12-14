@@ -31,7 +31,7 @@ const categories = [
     {
         id: "capture",
         label: "Capture",
-        keys: ["workingMode"]
+        keys: ["captureMode"]
     },
     {
         id: "performance",
