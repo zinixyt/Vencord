@@ -16,16 +16,18 @@ export const optionDefs = {
         default: true
     },
     ndiRuntimePath: {
+        label: "NDI Runtime Path",
         type: OptionType.STRING,
         description: "Path to NDI Runtime (Leave blank for default path)",
         default: "C:\\"
     },
     initNdiEngineOnStartup: {
+        label: "Initialize NDI Engine on Startup",
         type: OptionType.BOOLEAN,
         description: "Initialize NDI Engine on Discord startup",
         default: true
     },
-    workingMode: {
+    captureMode: {
         type: OptionType.SELECT,
         description: "Select Capture Method",
         options: [
@@ -47,6 +49,7 @@ export const optionDefs = {
         default: true
     },
     masterFpsCap: {
+        label: "Master FPS Cap",
         type: OptionType.SLIDER,
         description: "Set a master FPS cap for NDI output",
         default: 30,
@@ -59,6 +62,16 @@ export const optionDefs = {
         type: OptionType.BOOLEAN,
         description: "Show the NDIcord test chat input button",
         default: true
+    },
+    uiFlavour: {
+        label: "UI Flavour",
+        type: OptionType.SELECT,
+        description: "Select the UI flavour for NDIcord settings",
+        options: [
+            { label: "Non-Intrusive", value: "nonIntrusive", description: "A minimal UI that blends with Discord's settings.", default: true },
+            { label: "Pro-Production", value: "proProduction", description: "A detailed UI with advanced options for professional content creators." },
+            { label: "Balanced", value: "balanced", description: "A balanced UI with essential options and a clean layout." }
+        ]
     }
 } as const;
 
@@ -76,4 +89,5 @@ export const settings = definePluginSettings({
     offloadToWorkerThread?: boolean;
     masterFpsCap?: number;
     showTestButton?: boolean;
+    uiFlavour?: string;
 }>();
