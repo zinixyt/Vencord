@@ -5,21 +5,20 @@
  */
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
-import { Button } from "@components/Button";
+import ErrorBoundary from "@components/ErrorBoundary";
 import { Heading } from "@components/Heading";
 import { Devs } from "@utils/constants";
 import { ModalContent, ModalRoot, ModalSize, openModal } from "@utils/modal";
-import definePlugin, { IconComponent, StartAt } from "@utils/types";
+import definePlugin, { StartAt } from "@utils/types";
 
 import { settings } from "./settings";
+import { NDIIconXS } from "./ui/uiUtils";
+import { vcNdiPanel } from "./ui/vcPanel";
 
-// --- ICONS & TEST BUTTON STUFF (Kept as is) ---
-const NDIIcon: IconComponent = ({ height = 20, width = 20, className }) => (
-    <svg height={height} width={width} viewBox="0 0 24 24" className={className} fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-    </svg>
-);
-
+/**
+ * Renders a debug button in the chat bar.
+ * Only visible if we are in a chat and the user has enabled the test button in settings.
+ */
 const NDIButton: ChatBarButtonFactory = ({ isAnyChat }) => {
     const s = settings.use();
     if (!isAnyChat || !s.masterSwitch || !s.showTestButton) return null;
@@ -36,7 +35,7 @@ const NDIButton: ChatBarButtonFactory = ({ isAnyChat }) => {
                 </ModalRoot>
             ));
         }}>
-            <NDIIcon />
+            <NDIIconXS />
         </ChatBarButton>
     );
 };
@@ -45,43 +44,32 @@ export default definePlugin({
     name: "NDIcord",
     description: "Adds NDI streaming support to Discord. (Intended for content creators and streamers)",
     authors: [Devs.zinixyt],
-    // Render a basic chat input button for testing.
+
     startAt: StartAt.Init,
     chatBarButton: {
-        icon: NDIIcon,
+        icon: NDIIconXS,
         render: NDIButton
     },
     settings,
 
-    // --- THE FIX ---
     patches: [
         {
+            // Find the module responsible for the "Voice Connected" bottom tray
             find: "center-control-tray",
             replacement: {
-                match: /(\(0,\s*([a-zA-Z0-9_$]+)\.jsxs\)\("div",[\s\S]*?className:\s*([a-zA-Z0-9_$]+)\.buttonSection[\s\S]*?)(,\s*\(0,\s*[a-z]+\.jsx[\s\S]*?onDisconnectCall:)/,
-                replace: '$1,(0, $2.jsxs)("div",{className: $3.buttonSection, children: [(0, $2.jsx)($self.NDIPanel, {})] }) $4'
+                // Regex Breakdown:
+                // 1. \i.eventPromptsContainer -> Anchor to the identifier above the tray
+                // 2. \i.wrapper -> Finds the main container of the buttons
+                // 3. children:\[ -> Stops right at the start of the children array
+                match: /\i.eventPromptsContainer.*?ref:\i.*?\i.wrapper.*?children:\[/,
+                // Injects the custom panel component ($self.vcNdiPanel)
+                // into the children array alongside the existing controls.
+                replace: "$&$self.vcNdiPanel(),"
             }
-        }],
+        }
+    ],
 
-    // 4. Your Component Logic
-    // This is called by the replacement above
-    NDIPanel() {
-        return (
-            <div
-                style={{
-                    display: "flex",
-                    gap: "8px",
-                    // Add a little padding to match the native tray feel
-                    paddingLeft: "8px"
-                }}
-            >
-                <Button
-                    size="small"
-                    onClick={() => console.log("NDI Stream Started")}
-                >
-                    NDI
-                </Button>
-            </div>
-        );
-    }
+    // Wraps the custom UI component in an ErrorBoundary.
+    // This ensures that if the NDI panel crashes, it doesn't break the entire Voice Tray.
+    vcNdiPanel: ErrorBoundary.wrap(vcNdiPanel, { noop: true })
 });
