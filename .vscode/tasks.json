@@ -10,18 +10,7 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Inject",
-            "type": "shell",
-            "command": "pnpm inject",
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            },
-            "problemMatcher": []
+            }
         },
         {
             "label": "Watch",
