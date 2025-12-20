@@ -12,27 +12,27 @@ import { NDIConfig } from "./settingsPanel";
 export const optionDefs = {
     masterSwitch: {
         type: OptionType.BOOLEAN,
-        description: "Master toggle for the NDI Engine",
+        description: "Master toggle for the StreamerCord Engine",
         default: true
     },
     ndiRuntimePath: {
-        label: "NDI Runtime Path",
+        label: "NDI Runtime Path (deprecated)",
         type: OptionType.STRING,
         description: "Path to NDI Runtime (Leave blank for default path)",
         default: "C:\\"
     },
     initNdiEngineOnStartup: {
-        label: "Initialize NDI Engine on Startup",
+        label: "Initialize StreamerCord Engine on Startup",
         type: OptionType.BOOLEAN,
-        description: "Initialize NDI Engine on Discord startup",
+        description: "Initialize StreamerCord Engine on Discord startup",
         default: true
     },
     captureMode: {
         type: OptionType.SELECT,
         description: "Select Capture Method",
         options: [
-            { label: "Canvas Scrape", value: "Canvas Scrape", default: true },
-            { label: "Direct Hook", value: "Direct Hook" }
+            { label: "Packet Forward", value: "Packet Forward", default: true },
+            { label: "Canvas Scrape", value: "Canvas Scrape" }
         ]
     },
     videoFormat: {
