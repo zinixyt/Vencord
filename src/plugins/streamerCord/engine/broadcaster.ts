@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-// We use a Map to ensure we don't broadcast the same stream twice
 const activeBroadcasts = new Map<string, { pc: RTCPeerConnection, ws: WebSocket; }>();
 
-export async function broadcastStream(_, track: MediaStreamTrack, streamId: string, port: number = 4455) {
+export async function broadcastStream(track: MediaStreamTrack, streamId: string, port: number = 4455) {
+    // Prevent duplicates
     if (activeBroadcasts.has(streamId)) return;
 
-    console.log(`[StreamerCord] Starting stream: ${streamId}`);
+    console.log(`[Broadcaster] Starting stream: ${streamId}`);
 
     // 1. Connect to Local Signaling Server
     const ws = new WebSocket(`ws://127.0.0.1:${port}/${streamId}?mode=sender`);
@@ -18,7 +18,7 @@ export async function broadcastStream(_, track: MediaStreamTrack, streamId: stri
 
     activeBroadcasts.set(streamId, { pc, ws });
 
-    // 2. Add Track (Isolate into a new clean stream)
+    // 2. Add Track
     const stream = new MediaStream([track]);
     pc.addTrack(track, stream);
 
@@ -38,13 +38,9 @@ export async function broadcastStream(_, track: MediaStreamTrack, streamId: stri
         ws.send(JSON.stringify({ sdp: offer }));
     };
 
-    // 5. Cleanup when track ends (User leaves/stops stream)
-    track.onended = () => {
-        console.log(`[StreamerCord] Track ended: ${streamId}`);
-        stopBroadcast(streamId);
-    };
-
-    // Safety: If WS closes, kill PC
+    // 5. Cleanup
+    // Note: DOM tracks don't always fire "ended", so we rely on streamManager to kill us if the node disappears
+    track.onended = () => stopBroadcast(streamId);
     ws.onclose = () => stopBroadcast(streamId);
 }
 
@@ -54,6 +50,7 @@ export function stopBroadcast(streamId: string) {
         session.pc.close();
         session.ws.close();
         activeBroadcasts.delete(streamId);
+        console.log(`[Broadcaster] Stopped stream: ${streamId}`);
     }
 }
 

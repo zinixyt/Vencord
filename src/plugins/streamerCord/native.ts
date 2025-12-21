@@ -8,7 +8,7 @@ import crypto from "crypto";
 import http from "http";
 import { Socket } from "net";
 
-// Default port, but we will accept a port argument later if needed
+// Default port
 let PORT = 4455;
 
 // The Player Page (Served to OBS)
@@ -22,17 +22,21 @@ const PLAYER_HTML = /* html*/`
 <body>
     <video id="v" autoplay playsinline muted></video>
     <script>
+        // Get Stream ID from URL (e.g., /watch/Zinix_video)
         const pathParts = window.location.pathname.split("/");
-        const id = pathParts.pop() || pathParts.pop(); // Handle trailing slash
+        const id = pathParts.pop() || pathParts.pop();
         const port = window.location.port;
+
         const ws = new WebSocket("ws://localhost:" + port + "/" + id);
         const pc = new RTCPeerConnection();
 
+        // When we get the track, play it
         pc.ontrack = e => {
             const v = document.getElementById("v");
             if (v.srcObject !== e.streams[0]) v.srcObject = e.streams[0];
         };
 
+        // Standard WebRTC Signaling
         pc.onicecandidate = e => e.candidate && ws.send(JSON.stringify({candidate: e.candidate}));
 
         ws.onmessage = async msg => {
@@ -46,6 +50,8 @@ const PLAYER_HTML = /* html*/`
                 }
             } else if (data.candidate) await pc.addIceCandidate(data.candidate);
         };
+
+        // Auto-reconnect logic could go here
     </script>
 </body>
 </html>
@@ -69,7 +75,6 @@ class TinyWebSocket {
         const len = payload.length;
         let frame: Buffer;
 
-        // Construct Unmasked Frame (Server -> Client)
         if (len < 126) {
             frame = Buffer.alloc(2 + len);
             frame[0] = 0x81; frame[1] = len;
@@ -110,13 +115,12 @@ class TinyWebSocket {
     }
 }
 
-// Server State
 const senders = new Map<string, TinyWebSocket>();
 const receivers = new Map<string, TinyWebSocket>();
 let httpServer: http.Server | null = null;
 
 export function startWebServer(_, port: number = 4455) {
-    if (httpServer) return; // Already running
+    if (httpServer) return;
     PORT = port;
 
     httpServer = http.createServer((req, res) => {
@@ -158,7 +162,7 @@ export function startWebServer(_, port: number = 4455) {
         };
     });
 
-    httpServer.listen(PORT, "127.0.0.1", () => console.log(`[StreamerCord] Running on port ${PORT}`));
+    httpServer.listen(PORT, "127.0.0.1", () => console.log(`[StreamServer] Running on port ${PORT}`));
 }
 
 export function stopWebServer(_) {

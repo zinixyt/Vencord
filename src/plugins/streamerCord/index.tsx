@@ -12,7 +12,7 @@ import { ModalContent, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import definePlugin, { PluginNative, StartAt } from "@utils/types";
 
 import { stopAllBroadcasts } from "./engine/broadcaster";
-import { cleanupSniffer, injectSnifferClass } from "./engine/sniffer";
+import { startDomScan, stopDomScan } from "./engine/domObserver";
 import { settings } from "./settings";
 import { ScIconXS } from "./ui/uiUtils";
 import { VCscPanel } from "./ui/vcPanel";
@@ -64,16 +64,14 @@ export default definePlugin({
             console.log("[StreamerCord] Auto-starting web server.");
         }
 
-        // 2. Inject sniffer class to capture streams
-        console.log("[StreamerCord] Injecting sniffer class.");
-        injectSnifferClass();
+        startDomScan();
     },
 
     stop() {
         console.log("[StreamerCord] Shutting down, closing all pipes.");
+        stopDomScan();
         stopAllBroadcasts();
         Native.stopWebServer();
-        cleanupSniffer();
     },
 
     patches: [
