@@ -11,43 +11,51 @@ import { Paragraph } from "@components/Paragraph";
 import { OptionComponentMap } from "@components/settings/tabs/plugins/components";
 import { cl as globalCl } from "@components/settings/tabs/plugins/components/Common";
 import { classes } from "@utils/misc";
-import { React, useState } from "@webpack/common";
+import { PluginNative } from "@utils/types";
+import { React, Toasts, useState } from "@webpack/common";
+
+const Native = VencordNative.pluginHelpers.StreamerCord as PluginNative<typeof import("./native")>;
 
 import { optionDefs, settings } from "./settings";
 
-// useState is provided as a named export from @webpack/common
-
 const categories = [
     {
-        id: "ui",
-        label: "UI",
-        keys: ["uiFlavour"]
+        id: "server",
+        label: "Server",
+        keys: ["serverPort", "autoStartServer"]
     },
     {
-        id: "engine",
-        label: "NDI Engine",
-        keys: ["masterSwitch", "initNdiEngineOnStartup", "ndiRuntimePath", "videoFormat"]
+        id: "quality",
+        label: "Quality",
+        keys: ["videoBitrate", "forceKeyframeInterval"]
     },
     {
-        id: "capture",
-        label: "Capture",
-        keys: ["captureMode"]
-    },
-    {
-        id: "performance",
-        label: "Performance",
-        keys: ["offloadToWorkerThread", "masterFpsCap"]
+        id: "interface",
+        label: "Interface",
+        keys: ["showStreamInfoOverlay", "copyTemplate"]
     },
     {
         id: "advanced",
         label: "Advanced",
-        keys: ["showTestButton"]
+        keys: ["debugLogging", "showTestButton"]
     }
 ];
 
-export function NDIConfig() {
+export function SCConfig() {
     const [active, setActive] = useState(categories[0].id);
     const s = settings.use();
+
+    // Helper to restart server if port changes
+    const handleServerToggle = async () => {
+        try {
+            // We can add a toast or visual indicator here later
+            Native.stopWebServer();
+            Native.startWebServer();
+            Toasts.show({ id: "server-restart", message: "Server Restarted!", type: Toasts.Type.SUCCESS });
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     const renderSetting = (key: string) => {
         const def = optionDefs[key as keyof typeof optionDefs];
@@ -81,34 +89,49 @@ export function NDIConfig() {
     return (
         <ErrorBoundary>
             <div style={rootStyle}>
-                <div style={{ display: "flex", gap: ".5rem", alignItems: "center", overflowX: "auto" }}>
+                {/* Server Status Header */}
+                <div style={{ background: "var(--background-secondary)", padding: "10px", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                        <Heading tag="h3" style={{ margin: 0 }}>WebRTC Server</Heading>
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.85em" }}>
+                            OBS Link: <code style={{ userSelect: "text" }}>http://localhost:{settings.store.serverPort || 4455}</code>
+                        </span>
+                    </div>
+                    <Button
+                        onClick={handleServerToggle}
+                    >
+                        Restart Server
+                    </Button>
+                </div>
+
+                {/* Tabs */}
+                <div style={{ display: "flex", width: "100%", gap: ".5rem", alignItems: "center", overflowX: "auto", borderBottom: "1px solid var(--background-modifier-accent)" }}>
                     {categories.map(cat => (
                         <Button
                             key={cat.id}
                             onClick={() => setActive(cat.id)}
                             className={classes(globalCl("section"), active === cat.id && "vc-active-category")}
-                            style={active === cat.id ? { borderBottom: "2px solid var(--interactive-normal)", background: "transparent", color: "var(--header-primary)" } as any : { background: "transparent", color: "var(--text-muted)" }}
+                            style={active === cat.id
+                                ? { flex: 1, minWidth: 0, borderBottom: "2px solid var(--interactive-active)", color: "var(--interactive-active)", borderRadius: 0 } as any
+                                : { flex: 1, minWidth: 0, color: "var(--interactive-normal)", borderRadius: 0 }}
                         >
                             {cat.label}
                         </Button>
                     ))}
                 </div>
 
+                {/* Content */}
                 <div>
-                    <Heading tag="h3">{activeCategory.label} Settings</Heading>
-                    <Paragraph />
-                    <div style={{ marginTop: 8 }}>
+                    <Heading tag="h3" style={{ marginBottom: 10 }}>{activeCategory.label}</Heading>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                         {categoryKeys.length === 0 && (
-                            <Paragraph>No options in this category</Paragraph>
+                            <Paragraph>No options available.</Paragraph>
                         )}
-                        {categoryKeys.map(k => (
-                            <>{renderSetting(k)}
-                                <br /></>
-                        ))}
+                        {categoryKeys.map(k => renderSetting(k))}
                     </div>
                 </div>
             </div>
         </ErrorBoundary>
     );
 }
-export default NDIConfig;
+export default SCConfig;

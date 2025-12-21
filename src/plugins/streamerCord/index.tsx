@@ -9,11 +9,15 @@ import ErrorBoundary from "@components/ErrorBoundary";
 import { Heading } from "@components/Heading";
 import { Devs } from "@utils/constants";
 import { ModalContent, ModalRoot, ModalSize, openModal } from "@utils/modal";
-import definePlugin, { StartAt } from "@utils/types";
+import definePlugin, { PluginNative, StartAt } from "@utils/types";
 
+import { stopAllBroadcasts } from "./engine/broadcaster";
+import { cleanupSniffer, injectSnifferClass } from "./engine/sniffer";
 import { settings } from "./settings";
 import { ScIconXS } from "./ui/uiUtils";
 import { VCscPanel } from "./ui/vcPanel";
+
+const Native = VencordNative.pluginHelpers.StreamerCord as PluginNative<typeof import("./native")>;
 
 /**
  * Renders a debug button in the chat bar.
@@ -21,7 +25,7 @@ import { VCscPanel } from "./ui/vcPanel";
  */
 const scButton: ChatBarButtonFactory = ({ isAnyChat }) => {
     const s = settings.use();
-    if (!isAnyChat || !s.masterSwitch || !s.showTestButton) return null;
+    if (!isAnyChat || !s.showTestButton) return null;
     return (
         <ChatBarButton tooltip="StreamerCord Test" onClick={() => {
             openModal(props => (
@@ -51,6 +55,25 @@ export default definePlugin({
         render: scButton
     },
     settings,
+    start() {
+        // 1. Auto-start server if enabled
+        const s = settings.use();
+        if (s.autoStartServer) {
+            Native.startWebServer(s.serverPort);
+            console.log("[StreamerCord] Auto-starting web server.");
+        }
+
+        // 2. Inject sniffer class to capture streams
+        console.log("[StreamerCord] Injecting sniffer class.");
+        injectSnifferClass();
+    },
+
+    stop() {
+        console.log("[StreamerCord] Shutting down, closing all pipes.");
+        stopAllBroadcasts();
+        Native.stopWebServer();
+        cleanupSniffer();
+    },
 
     patches: [
         {
@@ -71,8 +94,5 @@ export default definePlugin({
 
     // Wraps the custom UI component in an ErrorBoundary.
     // This ensures that if the NDI panel crashes, it doesn't break the entire Voice Tray.
-    VCscPanel: ErrorBoundary.wrap(VCscPanel, { noop: true }),
-    stop() {
-        console.log("[StreamerCord] Shutting down, closing all pipes.");
-    }
+    VCscPanel: ErrorBoundary.wrap(VCscPanel, { noop: true })
 });
