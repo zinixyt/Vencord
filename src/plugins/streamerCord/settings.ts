@@ -7,87 +7,93 @@
 import { definePluginSettings } from "@api/Settings";
 import { OptionType } from "@utils/types";
 
-import { NDIConfig } from "./settingsPanel";
+import { SCConfig } from "./settingsPanel";
 
 export const optionDefs = {
-    masterSwitch: {
+    // --- Server Settings ---
+    serverPort: {
+        label: "Web Server Port",
+        type: OptionType.NUMBER,
+        description: "The local port for OBS to connect to (Default: 4455). Restart required.",
+        default: 4455,
+        min: 1024,
+        max: 65535
+    },
+    autoStartServer: {
+        label: "Auto-Start Server",
         type: OptionType.BOOLEAN,
-        description: "Master toggle for the StreamerCord Engine",
+        description: "Automatically start the streaming server when Discord launches.",
         default: true
     },
-    ndiRuntimePath: {
-        label: "NDI Runtime Path (deprecated)",
-        type: OptionType.STRING,
-        description: "Path to NDI Runtime (Leave blank for default path)",
-        default: "C:\\"
-    },
-    initNdiEngineOnStartup: {
-        label: "Initialize StreamerCord Engine on Startup",
-        type: OptionType.BOOLEAN,
-        description: "Initialize StreamerCord Engine on Discord startup",
-        default: true
-    },
-    captureMode: {
-        type: OptionType.SELECT,
-        description: "Select Capture Method",
-        options: [
-            { label: "Packet Forward", value: "Packet Forward", default: true },
-            { label: "Canvas Scrape", value: "Canvas Scrape" }
-        ]
-    },
-    videoFormat: {
-        type: OptionType.SELECT,
-        description: "Select NDI video format",
-        options: [
-            { label: "UYVY", value: "UYVY" },
-            { label: "BGRA", value: "BGRA", default: true }
-        ]
-    },
-    offloadToWorkerThread: {
-        type: OptionType.BOOLEAN,
-        description: "Offload NDI processing to a Worker Thread (May improve performance)",
-        default: true
-    },
-    masterFpsCap: {
-        label: "Master FPS Cap",
+
+    // --- Stream Settings ---
+    videoBitrate: {
+        label: "Target Video Bitrate (Mbps)",
         type: OptionType.SLIDER,
-        description: "Set a master FPS cap for NDI output",
-        default: 30,
-        markers: [5, 15, 30, 60],
-        min: 5,
-        max: 60,
-        step: 5
+        description: "Higher = Better Quality but more Network/CPU usage.",
+        default: 6,
+        markers: [2, 6, 12, 20, 50],
+        min: 1,
+        max: 50,
+        step: 1
     },
-    showTestButton: {
+    forceKeyframeInterval: {
+        label: "Keyframe Interval (Seconds)",
+        type: OptionType.SLIDER,
+        description: "How often to send a full frame. Lower = Faster recovery in OBS but slightly lower quality.",
+        default: 2,
+        markers: [1, 2, 5, 10],
+        min: 1,
+        max: 10
+    },
+
+    // --- UI & UX ---
+    showStreamInfoOverlay: {
+        label: "Show Stream Info Overlay",
         type: OptionType.BOOLEAN,
-        description: "Show the NDIcord test chat input button",
+        description: "Displays a small overlay on stream tiles showing their OBS Link status.",
         default: true
     },
-    uiFlavour: {
-        label: "UI Flavour",
+    copyTemplate: {
+        label: "OBS Link Template",
         type: OptionType.SELECT,
-        description: "Select the UI flavour for NDIcord settings",
+        description: "Format for copying links to clipboard.",
         options: [
-            { label: "Non-Intrusive", value: "nonIntrusive", description: "A minimal UI that blends with Discord's settings.", default: true },
-            { label: "Pro-Production", value: "proProduction", description: "A detailed UI with advanced options for professional content creators." },
-            { label: "Balanced", value: "balanced", description: "A balanced UI with essential options and a clean layout." }
+            { label: "Standard URL (http://...)", value: "url", default: true },
+            { label: "VDO.ninja Style", value: "vdo" },
+            { label: "Browser Source JSON (Advanced)", value: "json" }
         ]
+    },
+
+    // --- Debugging ---
+    debugLogging: {
+        label: "Debug Logging",
+        type: OptionType.BOOLEAN,
+        description: "Log WebRTC signaling events to the console (Ctrl+Shift+I).",
+        default: false
+    },
+
+    // --- Advanced ---
+    showTestButton: {
+        label: "Show Test Button",
+        type: OptionType.BOOLEAN,
+        description: "Show a test button in chat to verify the plugin is active.",
+        default: false
     }
 } as const;
 
 export const settings = definePluginSettings({
     config: {
         type: OptionType.COMPONENT,
-        component: NDIConfig
+        component: SCConfig
     }
 }).withPrivateSettings<{
-    masterSwitch?: boolean;
-    ndiRuntimePath?: string;
-    initNdiEngineOnStartup?: boolean;
-    workingMode?: string;
-    videoFormat?: string;
-    offloadToWorkerThread?: boolean;
-    masterFpsCap?: number;
+    serverPort?: number;
+    autoStartServer?: boolean;
+    videoBitrate?: number;
+    forceKeyframeInterval?: number;
+    showStreamInfoOverlay?: boolean;
+    copyTemplate?: string;
+    debugLogging?: boolean;
     showTestButton?: boolean;
-    uiFlavour?: string;
 }>();
